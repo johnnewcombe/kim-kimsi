@@ -1,0 +1,45 @@
+ca65 V2.18 - N/A
+Main file   : cromenco4pio.s
+Current file: cromenco4pio.s
+
+000000r 1               ;=============================================================================
+000000r 1               ; Cromenco 4PIO Relay Example (c) J.L.Newcombe 2024
+000000r 1               ;
+000000r 1               ; The relays are latching and one byte determines the state of all relays.
+000000r 1               ; Therefor to turn a relay(s) on, simply OR a mask value with the
+000000r 1               ; current relay state. For example to turn on relay 0 the following mask
+000000r 1               ; could be used.
+000000r 1               ;
+000000r 1               ;     ONMASK      = %00000010
+000000r 1               ;
+000000r 1               ; To turn relays off simply AND a mask. For example to turn off relay 1 the following mask
+000000r 1               ; could be used.
+000000r 1               ;
+000000r 1               ;     OFMASK      = %11111110
+000000r 1               ;
+000000r 1               ; See example below
+000000r 1               ;
+000000r 1               ;-----------------------------------------------------------------------------
+000000r 1               ; Date          Comment
+000000r 1               ;-----------------------------------------------------------------------------
+000000r 1               ;
+000000r 1               ;
+000000r 1               ;-----------------------------------------------------------------------------
+000000r 1                           .org $0200       ;
+000200  1               
+000200  1               IOBASE      = $80           ; base I/O port used by the card
+000200  1               KIMSIPORT   = $FA00         ; address used by KIMSI to access 8080/Z80 ports
+000200  1               RELAYS      = $00           ; address that stores the state of the relays
+000200  1               
+000200  1               OFFMASK     = %11111110     ; example mask to turn off relay 0
+000200  1               ONMASK      = %00000010     ;
+000200  1               
+000200  1  A5 00                    lda RELAYS      ; ZP address holds current state of relays
+000202  1  25 FE                    and OFFMASK     ; turn relays off by applying the off mask
+000204  1  05 02                    ora ONMASK      ; turn relays on by applying the on mask
+000206  1  85 00                    sta RELAYS      ; store the new state in ZP
+000208  1               
+000208  1  A6 80                    ldx IOBASE      ; send new state to the card
+00020A  1  9D 00 FA                 STA KIMSIPORT,x ;
+00020D  1               
+00020D  1               
