@@ -27,14 +27,47 @@ IOBASE      = $80           ; base I/O port used by the card
 KIMSIPORT   = $FA00         ; address used by KIMSI to access 8080/Z80 ports
 RELAYS      = $00           ; address that stores the state of the relays
 
-OFFMASK     = %11111110     ; example mask to turn off relay 0
-ONMASK      = %00000010     ;
+;-----------------------------------------------------------------------------
+; Example of using masks
+;-----------------------------------------------------------------------------
+; OFFMASK     = %11111110     ; AND this with the current state, to turn off relay 0
+; ONMASK      = %00000010     ; OR this with the current state to turn on relay 1
+;             lda RELAYS      ; ZP address holds current state of relays
+;             and OFFMASK     ; turn relays off by applying the off mask
+;             ora ONMASK      ; turn relays on by applying the on mask
+;             sta RELAYS      ; store the new state in ZP
+;-----------------------------------------------------------------------------
 
-            lda RELAYS      ; ZP address holds current state of relays
-            and OFFMASK     ; turn relays off by applying the off mask
-            ora ONMASK      ; turn relays on by applying the on mask
-            sta RELAYS      ; store the new state in ZP
 
-            ldx IOBASE      ; send new state to the card
-            STA KIMSIPORT,x ;
+;-----------------------------------------------------------------------------
+; Initialise
+;-----------------------------------------------------------------------------
+            lda #$FF
+            sta $1707           ; set timer division
+
+            lda #0              ; all relays off
+            sta RELAYS
+;-----------------------------------------------------------------------------
+
+LOOP:       ldx IOBASE          ; send new state to the card
+            STA KIMSIPORT,x     ;
+
+;-----------------------------------------------------------------------------
+; Check the Timer
+;-----------------------------------------------------------------------------
+; If the counter has passed the count of zero, bit 7 will be set to 1,
+; otherwise, bit 7 (and all other bits in location 170?) will be zero.
+;-----------------------------------------------------------------------------
+WAIT:       LDA $1707           ; check the timer
+            BEQ WAIT
+            LDA $1706           ; restore divider etc (a read will accomplish this)
+
+;-----------------------------------------------------------------------------
+; Toggle all of the relays
+;-----------------------------------------------------------------------------
+            lda RELAYS          ; toggle all of the relays
+            eor #$FF
+            sta RELAYS
+            jmp LOOP
+
 

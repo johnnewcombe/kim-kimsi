@@ -31,15 +31,48 @@ Current file: cromenco4pio.s
 000200  1               KIMSIPORT   = $FA00         ; address used by KIMSI to access 8080/Z80 ports
 000200  1               RELAYS      = $00           ; address that stores the state of the relays
 000200  1               
-000200  1               OFFMASK     = %11111110     ; example mask to turn off relay 0
-000200  1               ONMASK      = %00000010     ;
+000200  1               ;-----------------------------------------------------------------------------
+000200  1               ; Example of using masks
+000200  1               ;-----------------------------------------------------------------------------
+000200  1               ; OFFMASK     = %11111110     ; AND this with the current state, to turn off relay 0
+000200  1               ; ONMASK      = %00000010     ; OR this with the current state to turn on relay 1
+000200  1               ;             lda RELAYS      ; ZP address holds current state of relays
+000200  1               ;             and OFFMASK     ; turn relays off by applying the off mask
+000200  1               ;             ora ONMASK      ; turn relays on by applying the on mask
+000200  1               ;             sta RELAYS      ; store the new state in ZP
+000200  1               ;-----------------------------------------------------------------------------
 000200  1               
-000200  1  A5 00                    lda RELAYS      ; ZP address holds current state of relays
-000202  1  25 FE                    and OFFMASK     ; turn relays off by applying the off mask
-000204  1  05 02                    ora ONMASK      ; turn relays on by applying the on mask
-000206  1  85 00                    sta RELAYS      ; store the new state in ZP
-000208  1               
-000208  1  A6 80                    ldx IOBASE      ; send new state to the card
-00020A  1  9D 00 FA                 STA KIMSIPORT,x ;
-00020D  1               
-00020D  1               
+000200  1               
+000200  1               ;-----------------------------------------------------------------------------
+000200  1               ; Initialise
+000200  1               ;-----------------------------------------------------------------------------
+000200  1  A9 FF                    lda #$FF
+000202  1  8D 07 17                 sta $1707           ; set timer division
+000205  1               
+000205  1  A9 00                    lda #0              ; all relays off
+000207  1  85 00                    sta RELAYS
+000209  1               ;-----------------------------------------------------------------------------
+000209  1               
+000209  1  A6 80        LOOP:       ldx IOBASE          ; send new state to the card
+00020B  1  9D 00 FA                 STA KIMSIPORT,x     ;
+00020E  1               
+00020E  1               ;-----------------------------------------------------------------------------
+00020E  1               ; Check the Timer
+00020E  1               ;-----------------------------------------------------------------------------
+00020E  1               ; If the counter has passed the count of zero, bit 7 will be set to 1,
+00020E  1               ; otherwise, bit 7 (and all other bits in location 170?) will be zero.
+00020E  1               ;-----------------------------------------------------------------------------
+00020E  1  AD 07 17     WAIT:       LDA $1707           ; check the timer
+000211  1  F0 FB                    BEQ WAIT
+000213  1  AD 06 17                 LDA $1706           ; restore divider etc (a read will accomplish this)
+000216  1               
+000216  1               ;-----------------------------------------------------------------------------
+000216  1               ; Toggle all of the relays
+000216  1               ;-----------------------------------------------------------------------------
+000216  1  A5 00                    lda RELAYS          ; toggle all of the relays
+000218  1  49 FF                    eor #$FF
+00021A  1  85 00                    sta RELAYS
+00021C  1  4C 09 02                 jmp LOOP
+00021F  1               
+00021F  1               
+00021F  1               
