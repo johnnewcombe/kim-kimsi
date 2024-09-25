@@ -28,7 +28,8 @@ Current file: cromenco4pio.s
 000000r 1                           .org $0200       ;
 000200  1               
 000200  1               IOBASE      = $80           ; base I/O port used by the card
-000200  1               KIMSIPORT   = $FA00         ; address used by KIMSI to access 8080/Z80 ports
+000200  1               KIMSIPORT   = $F000         ; KIMSI address to access 8080/Z80 ports
+000200  1                                           ; uses bits 0-7 only see KIMSI manual
 000200  1               RELAYS      = $00           ; address that stores the state of the relays
 000200  1               
 000200  1               ;-----------------------------------------------------------------------------
@@ -46,15 +47,15 @@ Current file: cromenco4pio.s
 000200  1               ;-----------------------------------------------------------------------------
 000200  1               ; Initialise
 000200  1               ;-----------------------------------------------------------------------------
-000200  1  A9 FF                    lda #$FF
+000200  1  A9 FF                    lda #$FF            ; set maximum for timer
 000202  1  8D 07 17                 sta $1707           ; set timer division
 000205  1               
 000205  1  A9 00                    lda #0              ; all relays off
 000207  1  85 00                    sta RELAYS
 000209  1               ;-----------------------------------------------------------------------------
 000209  1               
-000209  1  A6 80        LOOP:       ldx IOBASE          ; send new state to the card
-00020B  1  9D 00 FA                 STA KIMSIPORT,x     ;
+000209  1  A6 80        LOOP:       ldx IOBASE          ; send new state to the I/O port
+00020B  1  9D 00 F0                 STA KIMSIPORT,x     ;
 00020E  1               
 00020E  1               ;-----------------------------------------------------------------------------
 00020E  1               ; Check the Timer

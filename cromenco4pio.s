@@ -24,7 +24,8 @@
             .org $0200       ;
 
 IOBASE      = $80           ; base I/O port used by the card
-KIMSIPORT   = $FA00         ; address used by KIMSI to access 8080/Z80 ports
+KIMSIPORT   = $F000         ; KIMSI address to access 8080/Z80 ports
+                            ; uses bits 0-7 only see KIMSI manual
 RELAYS      = $00           ; address that stores the state of the relays
 
 ;-----------------------------------------------------------------------------
@@ -42,14 +43,14 @@ RELAYS      = $00           ; address that stores the state of the relays
 ;-----------------------------------------------------------------------------
 ; Initialise
 ;-----------------------------------------------------------------------------
-            lda #$FF
+            lda #$FF            ; set maximum for timer
             sta $1707           ; set timer division
 
             lda #0              ; all relays off
             sta RELAYS
 ;-----------------------------------------------------------------------------
 
-LOOP:       ldx IOBASE          ; send new state to the card
+LOOP:       ldx IOBASE          ; send new state to the I/O port
             STA KIMSIPORT,x     ;
 
 ;-----------------------------------------------------------------------------
